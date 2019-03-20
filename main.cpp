@@ -4,6 +4,7 @@
 #include <vector>
 #include <unistd.h>
 #include <queue>
+#include <stdio.h>
 
 typedef struct
 {
@@ -14,6 +15,16 @@ typedef struct
 	int* readingState;
 }threadInfo;
 
+void print_pairs(threadInfo* data)
+{
+	printf("entré al print\n");
+	threadInfo* info = data;
+	//int threadID = info->threadID;
+	for(std::vector<Pair>::iterator pos = info->vector->begin(); pos != info->vector->end(); ++pos){
+		printf("Oracion: %s, Palabras: %d\n", pos->sentence.c_str(), pos->wordCount);
+	}
+	
+}
 
 void* run(void* data)
 {
@@ -26,60 +37,61 @@ void* run(void* data)
         std::string sentence;
         while((info->readingState[0]) == 1 && std::getline(std::cin, sentence)){
             if(sentence == "1"){
-               info->readingState[0] = 0;
-               Pair newPair(sentence);
-               info->queue->push(newPair);
-            }else{
+                info->readingState[0] = 0;
                 Pair newPair(sentence);
-                info->vector->push_back(newPair);
+            	info->queue->push(newPair);
+				sem_post(&(info->semaphores[(threadId + 1)]));
+				printf("Hice un post al semaforo\n");
+				print_pairs(info);
+            }else{
+            	Pair newPair(sentence);
+            	info->vector->push_back(newPair);
 				printf("Push al vector\n");
                 info->queue->push(newPair);
+				sem_post(&(info->semaphores[(threadId + 1)]));
+				printf("Hice un post al semaforo\n");
 				printf("Push al queue\n");
-			}
-			sem_post(&(info->semaphores[(threadId + 1)]));
-			printf("Hice un post al semaforo\n");
 		}
+	}
 		printf("Encontre un 1 y no sigo leyendo\n");									
 	}else{ // contador
-		bool keepCounting = true;
+			bool keepCounting = true;
+			int counter = 0;
 	    	while(keepCounting){
-            	int counter = 0;
             	int wrdCount = 0;
-		std::string oracion;
-		printf("Estoy esperando en el primer semaforo\n");
+				std::string oracion;
+				printf("Estoy esperando en el primer semaforo\n");
             	sem_wait(&(info->semaphores[threadId]));
-		printf("Pase el primer semaforo\n");
+				printf("Pase el primer semaforo\n");
             	while(!(info->queue->empty())){
                 	int lenght = info->queue->front().sentence.length();
-			oracion = info->queue->front().sentence;
-			if(oracion == "1"){
-				keepCounting = false;
-			}else{
-				char anterior = ',';
-				std::cout << oracion << "\n";
-				for (int i = 0; i < lenght; i++){
-				        if(isalnum(anterior) && !isalnum(oracionActual[i])){
+					oracion = info->queue->front().sentence;
+					if(oracion == "1"){
+						keepCounting = false;
+					}else{
+						char anterior = ',';
+						std::cout << oracion << "\n";
+						for (int i = 0; i < lenght; i++){
+				        	if(isalnum(anterior) && !isalnum(oracion[i])){
+								wrdCount++;
+							}
+							anterior = oracion[i];
+						}
+					if(isalnum(oracion[oracion.length() - 1])){
 						wrdCount++;
-						anterior = oracionActual[i];
 					}
-				}
-				if(isalnum(oracionActual[oracionActual.length()])){
-					wrdCount++;
-				}
 				info->vector->at(counter).wordCount = wrdCount;
 				++counter;
-			}
+				}
 			info->queue->pop();
 			sleep(5);	
-		  }
+			}
 		}
         printf("Me sali del while keepCounting\n");
 	}
 	printf("%d VOY JALADO\n", threadId);
 	return NULL;
 }
-	
-
 
 void initialize_semaphores(sem_t* semaphores, int size)
 {
