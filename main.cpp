@@ -17,11 +17,10 @@ typedef struct
 
 void print_pairs(threadInfo* data)
 {
-	printf("entré al print\n");
 	threadInfo* info = data;
 	//int threadID = info->threadID;
 	for(std::vector<Pair>::iterator pos = info->vector->begin(); pos != info->vector->end(); ++pos){
-		printf("Oracion: %s, Palabras: %d\n", pos->sentence.c_str(), pos->wordCount);
+		std::cout << "Oracion: " << pos->sentence << ", Palabras: " << pos->wordCount << std::endl;
 	}
 	
 }
@@ -41,55 +40,47 @@ void* run(void* data)
                 Pair newPair(sentence);
             	info->queue->push(newPair);
 				sem_post(&(info->semaphores[(threadId + 1)]));
-				printf("Hice un post al semaforo\n");
+				sem_wait(&(info->semaphores[threadId]));
 				print_pairs(info);
             }else{
             	Pair newPair(sentence);
             	info->vector->push_back(newPair);
-				printf("Push al vector\n");
                 info->queue->push(newPair);
 				sem_post(&(info->semaphores[(threadId + 1)]));
-				printf("Hice un post al semaforo\n");
-				printf("Push al queue\n");
 		}
-	}
-		printf("Encontre un 1 y no sigo leyendo\n");									
+	}									
 	}else{ // contador
 			bool keepCounting = true;
 			int counter = 0;
 	    	while(keepCounting){
             	int wrdCount = 0;
-				std::string oracion;
-				printf("Estoy esperando en el primer semaforo\n");
+				std::string sentence;
             	sem_wait(&(info->semaphores[threadId]));
-				printf("Pase el primer semaforo\n");
             	while(!(info->queue->empty())){
                 	int lenght = info->queue->front().sentence.length();
-					oracion = info->queue->front().sentence;
-					if(oracion == "1"){
+					sentence = info->queue->front().sentence;
+					if(sentence == "1"){
 						keepCounting = false;
+						sem_post(&(info->semaphores[(threadId - 1)]));
 					}else{
 						char anterior = ',';
-						std::cout << oracion << "\n";
 						for (int i = 0; i < lenght; i++){
-				        	if(isalnum(anterior) && !isalnum(oracion[i])){
+				        	if(isalnum(anterior) && !isalnum(sentence[i])){
 								wrdCount++;
 							}
-							anterior = oracion[i];
+							anterior = sentence[i];
 						}
-					if(isalnum(oracion[oracion.length() - 1])){
-						wrdCount++;
+						if(isalnum(sentence[sentence.length() - 1])){
+							wrdCount++;
+						}
+						info->vector->at(counter).wordCount = wrdCount;
+						++counter;
 					}
-				info->vector->at(counter).wordCount = wrdCount;
-				++counter;
-				}
-			info->queue->pop();
-			sleep(5);	
+				info->queue->pop();
+				// sleep(5);	
 			}
 		}
-        printf("Me sali del while keepCounting\n");
 	}
-	printf("%d VOY JALADO\n", threadId);
 	return NULL;
 }
 
