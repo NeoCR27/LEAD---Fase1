@@ -42,33 +42,35 @@ void* run(void* data)
 		printf("Encontre un 1 y no sigo leyendo\n");									
 	}else{ // contador
 		bool keepCounting = true;
-	    while(keepCounting){
-            int counter = 0;
-            int wrdCount = 0;
-			printf("Estoy esperando en el primer semaforo\n");
-            sem_wait(&(info->semaphores[threadId]));
-			printf("Pase el primer semaforo\n");
-            while(!(info->queue->empty())){
-                int lenght = info->queue->front().sentence.length();
-				if(info->queue->front().sentence == "1"){
-					keepCounting = false;
-				}else{
-					std::cout << info->queue->front().sentence << "\n";
-					for (int i = 0; i < lenght; i++){
-					   /* if(isalnum(anterior) && !isalnum(oracionActual[i])){
-							wrdCount++;
-							anterior = oracionActual[i];
-						}
-						if(isalnum(oracionActual[oracionActual.length()])){
+	    	while(keepCounting){
+            	int counter = 0;
+            	int wrdCount = 0;
+		std::string oracion;
+		printf("Estoy esperando en el primer semaforo\n");
+            	sem_wait(&(info->semaphores[threadId]));
+		printf("Pase el primer semaforo\n");
+            	while(!(info->queue->empty())){
+                	int lenght = info->queue->front().sentence.length();
+			oracion = info->queue->front().sentence;
+			if(oracion == "1"){
+				keepCounting = false;
+			}else{
+				char anterior = ',';
+				std::cout << oracion << "\n";
+				for (int i = 0; i < lenght; i++){
+				        if(isalnum(anterior) && !isalnum(oracionActual[i])){
 						wrdCount++;
-						}*/
+						anterior = oracionActual[i];
 					}
-					info->vector->at(counter).wordCount = wrdCount;
-					++counter;
 				}
-				info->queue->pop();
-				sleep(5);	
-
+				if(isalnum(oracionActual[oracionActual.length()])){
+					wrdCount++;
+				}
+				info->vector->at(counter).wordCount = wrdCount;
+				++counter;
+			}
+			info->queue->pop();
+			sleep(5);	
 		  }
 		}
         printf("Me sali del while keepCounting\n");
