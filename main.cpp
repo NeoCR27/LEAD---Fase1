@@ -39,8 +39,7 @@ void* run(void* data)
 			sem_post(&(info->semaphores[(threadId + 1)]));
 			printf("Hice un post al semaforo\n");
 		}
-										
-     
+		printf("Encontre un 1 y no sigo leyendo\n");									
 	}else{ // contador
 		bool keepCounting = true;
 	    while(keepCounting){
@@ -50,29 +49,31 @@ void* run(void* data)
             sem_wait(&(info->semaphores[threadId]));
 			printf("Pase el primer semaforo\n");
             while(!(info->queue->empty())){
-                int lenght = info->vector->at(counter).sentence.length();
-                for (int i = 0; i < lenght; i++){
-                   /* if(isalnum(anterior) && !isalnum(oracionActual[i])){
-                        wrdCount++;
-                        anterior = oracionActual[i];
-                    }
-                    if(isalnum(oracionActual[oracionActual.length()])){
-                    wrdCount++;
-               	 	}*/
-                }
-                info->vector->at(counter).wordCount = wrdCount;
-                ++counter;
-                if(info->queue->front().sentence == "1"){
+                int lenght = info->queue->front().sentence.length();
+				if(info->queue->front().sentence == "1"){
 					keepCounting = false;
+				}else{
+					std::cout << info->queue->front().sentence << "\n";
+					for (int i = 0; i < lenght; i++){
+					   /* if(isalnum(anterior) && !isalnum(oracionActual[i])){
+							wrdCount++;
+							anterior = oracionActual[i];
+						}
+						if(isalnum(oracionActual[oracionActual.length()])){
+						wrdCount++;
+						}*/
+					}
+					info->vector->at(counter).wordCount = wrdCount;
+					++counter;
 				}
 				info->queue->pop();
 				sleep(5);	
-				printf("Estoy esperando en el segundo semaforo\n");
-                sem_wait(&(info->semaphores[threadId]));
+
 		  }
 		}
-        //  return NULL;
+        printf("Me sali del while keepCounting\n");
 	}
+	printf("%d VOY JALADO\n", threadId);
 	return NULL;
 }
 	
@@ -106,8 +107,6 @@ int main()
 		data[index].readingState = readingState;
 		pthread_create(&threads[index], NULL, run, (void*)&data[index]);
 	}
-	
-	
 
 	for(int index = 0; index < 2; ++index){
 		pthread_join(threads[index], NULL);
